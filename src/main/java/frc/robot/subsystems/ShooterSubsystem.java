@@ -21,7 +21,7 @@ public class ShooterSubsystem extends SubsystemBase {
   public final WPI_TalonFX shooterBottomTalon = new WPI_TalonFX(41);
   public final WPI_TalonFX shooterTopTalon = new WPI_TalonFX(40);
   public final CANSparkMax hood = new CANSparkMax(34, MotorType.kBrushless); //FIXME motor ID
-  public final SparkMaxPIDController SparkMaxPIDController = new SparkMaxPIDController(hood);
+  public final SparkMaxPIDController SparkMaxPIDController;
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx = table.getEntry("tx");
   NetworkTableEntry ty = table.getEntry("ty");
@@ -86,10 +86,12 @@ public class ShooterSubsystem extends SubsystemBase {
   }
 */
   public void hoodPosition(){
-    hoodPIDController.setReference(4200, CANSparkMax.ControlType.kPosition);
+    hoodPIDController.setReference(-5, CANSparkMax.ControlType.kPosition);//FIXME change double to targetPosition once limelight stuff works
+    hood.set(-0.2);
+    //hoodPIDController.setReference(60, CANSparkMax.ControlType.kVelocity);
   }
   public void hoodPositionReset(){ //use in initialization
-    hoodPIDController.setReference(0, CANSparkMax.ControlType.kPosition);
+    //hoodEncoder.setPosition(0);
   }
 
   @Override
@@ -99,7 +101,11 @@ public class ShooterSubsystem extends SubsystemBase {
     double currentTa = ta.getDouble(0.0);
     currentPosition = hoodEncoder.getPosition(); 
     hoodPIDController = hood.getPIDController();
-    targetPosition = closePosition + ((currentTy - closeTy)*(farPosition - closePosition)/(farTy - closeTy));
+    
+    kP = 0.01;
+    hoodPIDController.setP(kP);
+
+    //targetPosition = closePosition ,+ ((currentTy - closeTy)*(farPosition - closePosition)/(farTy - closeTy));
 
     if (currentPosition != targetPosition) { 
       SmartDashboard.putString("Hood Status", "Waiting for motor to reach target");
@@ -107,8 +113,9 @@ public class ShooterSubsystem extends SubsystemBase {
     else {
       SmartDashboard.putString("Hood Status", "at target");
     }
+
+    SmartDashboard.putNumber("Current Hood Position", targetPosition);
     SmartDashboard.putNumber("Current Hood Position", currentPosition);
-    SmartDashboard.putNumber("Target Hood Position", targetPosition);
     SmartDashboard.putNumber("LimelightX", currentTx);
     SmartDashboard.putNumber("LimelightY", currentTy);
     SmartDashboard.putNumber("LimelightArea", currentTa);
