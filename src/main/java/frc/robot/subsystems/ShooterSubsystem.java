@@ -21,7 +21,7 @@ public class ShooterSubsystem extends SubsystemBase {
   public final WPI_TalonFX shooterBottomTalon = new WPI_TalonFX(41);
   public final WPI_TalonFX shooterTopTalon = new WPI_TalonFX(40);
   public final CANSparkMax hood = new CANSparkMax(34, MotorType.kBrushless); //FIXME motor ID
-  public final SparkMaxPIDController SparkMaxPIDController = new SparkMaxPIDController(hood);
+  public SparkMaxPIDController hoodPIDController;
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx = table.getEntry("tx");
   NetworkTableEntry ty = table.getEntry("ty");
@@ -33,6 +33,7 @@ public class ShooterSubsystem extends SubsystemBase {
   double currentPosition;
   double targetPosition;
   RelativeEncoder hoodEncoder = hood.getEncoder();
+  double kP;
 
   /** Creates a new ShooterSubsystem. */
   public ShooterSubsystem() {
@@ -99,6 +100,11 @@ public class ShooterSubsystem extends SubsystemBase {
     double currentTa = ta.getDouble(0.0);
     currentPosition = hoodEncoder.getPosition(); 
     hoodPIDController = hood.getPIDController();
+
+    kP = 0.01;
+
+    hoodPIDController.setP(kP);
+
     targetPosition = closePosition + ((currentTy - closeTy)*(farPosition - closePosition)/(farTy - closeTy));
 
     if (currentPosition != targetPosition) { 
