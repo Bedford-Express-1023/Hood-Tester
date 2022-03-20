@@ -37,12 +37,12 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-   //m_ShooterSubsystem.setDefaultCommand(m_HoodPosition);
+   m_ShooterSubsystem.setDefaultCommand(m_HoodPosition);
 
-    new Button(controller::getAButton)
+    /*new Button(controller::getAButton)
     .whileHeld(m_HoodPosition);
     new Button(controller::getAButton)
-    .whenReleased(m_HoodPositionReset);
+    .whenReleased(m_HoodPositionReset);*/
   }
 
   /**

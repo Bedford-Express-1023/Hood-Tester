@@ -28,16 +28,16 @@ public class ShooterSubsystem extends SubsystemBase {
   NetworkTableEntry ta = table.getEntry("ta");
   double closePosition = 0.1; //FIXME hood angle for close shot
   double farPosition = 0.9; //FIXME hood angle for far shot
-  double closeTy = 8; //FIXME y coordinate of target on limelight cam for close shot
+  double closeTy = 8.8; //FIXME y coordinate of target on limelight cam for close shot
   double farTy = -8.8; //FIXME y coordinate of target on limelight cam for far shot
   double currentPosition;
   double targetPosition;
   RelativeEncoder hoodEncoder = hood.getEncoder();
   double positionAllowedError = 0;
   double testSpeed = 0.5;
-  double kP = 0.01; 
-  double kI = 1e-4;
-  double kD = 1; 
+  double kP = 2; 
+  double kI = 0;
+  double kD = 0; 
   double kIz = 0; 
   double kFF = 0; 
   double kMaxOutput = 1; 
@@ -117,7 +117,7 @@ public class ShooterSubsystem extends SubsystemBase {
     hoodPIDController.setOutputRange(kMinOutput, kMaxOutput);
      
     targetPosition = closePosition + ((currentTy - closeTy) * ((farPosition - closePosition) / (farTy - closeTy)));
-//close shot target position = 0.005 
+
     if ((currentPosition != targetPosition /*<= (targetPosition - positionAllowedError)) || (currentPosition >= (targetPosition + positionAllowedError)*/)) {
       SmartDashboard.putString("Hood Status", "Waiting for motor to reach target");
       //hood.set(testSpeed);
@@ -126,6 +126,7 @@ public class ShooterSubsystem extends SubsystemBase {
       SmartDashboard.putString("Hood Status", "at target");
     }
     SmartDashboard.putNumber("Current Hood Position", currentPosition);
+    SmartDashboard.putNumber("Target Hood Position", targetPosition);
     SmartDashboard.getNumber("Target Hood Position", targetPosition);
     SmartDashboard.putNumber("LimelightX", currentTx);
     SmartDashboard.putNumber("LimelightY", currentTy);
