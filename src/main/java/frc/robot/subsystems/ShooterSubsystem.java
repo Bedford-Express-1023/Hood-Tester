@@ -21,18 +21,27 @@ public class ShooterSubsystem extends SubsystemBase {
   public final WPI_TalonFX shooterBottomTalon = new WPI_TalonFX(41);
   public final WPI_TalonFX shooterTopTalon = new WPI_TalonFX(40);
   public final CANSparkMax hood = new CANSparkMax(34, MotorType.kBrushless); //FIXME motor ID
-  public final SparkMaxPIDController SparkMaxPIDController;
+  public SparkMaxPIDController hoodPIDController;
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx = table.getEntry("tx");
   NetworkTableEntry ty = table.getEntry("ty");
   NetworkTableEntry ta = table.getEntry("ta");
-  double closePosition = 4000; //FIXME hood angle for close shot
-  double farPosition = 8000; //FIXME hood angle for far shot
-  double closeTy = 6; //FIXME y coordinate of target on limelight cam for close shot
-  double farTy = -7; //FIXME y coordinate of target on limelight cam for far shot
+  double closePosition = 0.1; //FIXME hood angle for close shot
+  double farPosition = 0.9; //FIXME hood angle for far shot
+  double closeTy = 8; //FIXME y coordinate of target on limelight cam for close shot
+  double farTy = -8.8; //FIXME y coordinate of target on limelight cam for far shot
   double currentPosition;
   double targetPosition;
   RelativeEncoder hoodEncoder = hood.getEncoder();
+  double positionAllowedError = 0;
+  double testSpeed = 0.5;
+  double kP = 0.01; 
+  double kI = 1e-4;
+  double kD = 1; 
+  double kIz = 0; 
+  double kFF = 0; 
+  double kMaxOutput = 1; 
+  double kMinOutput = -1;
 
   /** Creates a new ShooterSubsystem. */
   public ShooterSubsystem() {
@@ -66,7 +75,7 @@ public class ShooterSubsystem extends SubsystemBase {
 		shooterTopTalon.config_kF(Constants.SLOT_0, Constants.kTopGains.kF, Constants.shooterTimeout);
     
     shooterTopTalon.setInverted(TalonFXInvertType.OpposeMaster);*/
-    //hoodEncoder.setPositionConversionFactor(100); //multiply encoder counts by gear ratios
+  
   }
 /*
   public void shooterRunAtVelocity(int bottomShooterVelocity, int topShooterVelocity2){
@@ -86,12 +95,11 @@ public class ShooterSubsystem extends SubsystemBase {
   }
 */
   public void hoodPosition(){
-    hoodPIDController.setReference(-5, CANSparkMax.ControlType.kPosition);//FIXME change double to targetPosition once limelight stuff works
-    hood.set(-0.2);
-    //hoodPIDController.setReference(60, CANSparkMax.ControlType.kVelocity);
+    hoodPIDController.setReference(targetPosition, CANSparkMax.ControlType.kPosition);//0 to 1
   }
   public void hoodPositionReset(){ //use in initialization
-    //hoodEncoder.setPosition(0);
+    //hoodPIDController.setReference(0, CANSparkMax.ControlType.kPosition);
+    hoodEncoder.setPosition(0);
   }
 
   @Override
@@ -101,21 +109,24 @@ public class ShooterSubsystem extends SubsystemBase {
     double currentTa = ta.getDouble(0.0);
     currentPosition = hoodEncoder.getPosition(); 
     hoodPIDController = hood.getPIDController();
-    
-    kP = 0.01;
     hoodPIDController.setP(kP);
-
-    //targetPosition = closePosition ,+ ((currentTy - closeTy)*(farPosition - closePosition)/(farTy - closeTy));
-
-    if (currentPosition != targetPosition) { 
+    hoodPIDController.setI(kI);
+    hoodPIDController.setD(kD);
+    hoodPIDController.setIZone(kIz);
+    hoodPIDController.setFF(kFF);
+    hoodPIDController.setOutputRange(kMinOutput, kMaxOutput);
+     
+    targetPosition = closePosition + ((currentTy - closeTy) * ((farPosition - closePosition) / (farTy - closeTy)));
+//close shot target position = 0.005 
+    if ((currentPosition != targetPosition /*<= (targetPosition - positionAllowedError)) || (currentPosition >= (targetPosition + positionAllowedError)*/)) {
       SmartDashboard.putString("Hood Status", "Waiting for motor to reach target");
+      //hood.set(testSpeed);
     }
     else {
       SmartDashboard.putString("Hood Status", "at target");
     }
-
-    SmartDashboard.putNumber("Current Hood Position", targetPosition);
     SmartDashboard.putNumber("Current Hood Position", currentPosition);
+    SmartDashboard.getNumber("Target Hood Position", targetPosition);
     SmartDashboard.putNumber("LimelightX", currentTx);
     SmartDashboard.putNumber("LimelightY", currentTy);
     SmartDashboard.putNumber("LimelightArea", currentTa);
